@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 
-class KalmanNet(nn.Module):
+class KalmanNetV1(nn.Module):
     def __init__(self, x_0, p_0, A, H, Q, R):
-        super(KalmanNet, self).__init__()
+        super(KalmanNetV1, self).__init__()
 
         self.x = nn.Parameter(torch.tensor(x_0, dtype=torch.float64))
         self.p = nn.Parameter(torch.tensor(p_0, dtype=torch.float64))
@@ -21,7 +21,7 @@ class KalmanNet(nn.Module):
             x_pred = self.A * self.x
             P_pred = self.A * self.p * self.A + self.Q
             K = P_pred * self.H / (self.H * P_pred * self.H + self.R)
-
+            print(K)
             with torch.no_grad():
                 self.x.copy_(torch.tensor((x_pred + K * (x[u] - self.H * x_pred)).item()))
                 self.p.copy_(torch.tensor((P_pred - K * self.H * P_pred).item()))
@@ -31,9 +31,9 @@ class KalmanNet(nn.Module):
 
 data = torch.ones(10, 1)
 learn_rate = 0.01
-n_epochs = 300
+n_epochs = 10
 
-model = KalmanNet(x_0=1,p_0=1,A=2,H=1.5,Q=1,R=9)
+model = KalmanNetV1(x_0=1,p_0=1,A=2,H=1.5,Q=1,R=9)
 mse_loss = nn.MSELoss()
 optimizer = torch.optim.Adam(lr=learn_rate, params=model.parameters())
 
@@ -47,7 +47,7 @@ for i in range(0, n_epochs):
     loss = mse_loss(y_pred, data)
     loss.backward()
     optimizer.step()
-    print(loss.item())
+    # print(loss.item())
 
 for p in model.named_parameters():
 	print(p)
