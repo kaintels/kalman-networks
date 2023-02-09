@@ -55,13 +55,3 @@ for p in model.named_parameters():
 X_test = torch.zeros(10, 1, dtype=torch.float32)
 
 print(model(X_test))
-# model.eval()
-# traced_cell = torch.jit.trace(model, X_test)
-# torch.jit.save(traced_cell, 'model.pt')
-
-# print(model)
-
-# from torchinfo import summary
-
-
-# summary(model, input_data=data, verbose=2)
