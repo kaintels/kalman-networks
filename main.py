@@ -5,6 +5,7 @@ import neurokit2 as nk
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
+import kalman
 random_seed = 777
 
 
@@ -21,19 +22,8 @@ H = 1.5
 Q = 1
 R = 9
 
-
 x_0 = 1
 P_0 = 1
-
-def kalman_filter(z_meas, x_esti, P):
-
-    x_pred = A * x_esti
-    P_pred = A * P * A + Q
-    K = P_pred * H / (H * P_pred * H + R)
-    x_esti = x_pred + K * (z_meas - H * x_pred)
-    P = P_pred - K * H * P_pred
-
-    return x_esti, P
 
 class Net(nn.Module):
     def __init__(self):
@@ -67,8 +57,8 @@ for i in range(0, n_epochs):
         if u == 0:
             x_esti, P = x_0, P_0
         else:
-            x_esti, P = kalman_filter(ecg_noise[u], x_esti, P)
-        esti_save[u] = x_esti
+            x_esti, P = kalman.kalman_filter(ecg_noise[u], A, H, Q, R, P, x_esti)
+        esti_save[u] = torch.FloatTensor(np.array([x_esti]))
 
     optimizer.zero_grad()
     y_pred = model(ecg_noise)
@@ -80,36 +70,36 @@ for i in range(0, n_epochs):
     print(loss.item())
     losses.append(loss.item())
 
-plt.plot(losses)
-plt.show()
+# plt.plot(losses)
+# plt.show()
 
-model2 = Net()
-mse_loss2 = nn.MSELoss()
-optimizer2 = torch.optim.Adam(lr = learn_rate, params=model2.parameters())
+# model2 = Net()
+# mse_loss2 = nn.MSELoss()
+# optimizer2 = torch.optim.Adam(lr = learn_rate, params=model2.parameters())
 
-losses = []
-for i in range(0, n_epochs):
+# losses = []
+# for i in range(0, n_epochs):
     
-    esti_save = torch.zeros(len_sample)
-    for u in range(len_sample):
-        if u == 0:
-            x_esti, P = x_0, P_0
-        else:
-            x_esti, P = kalman_filter(ecg_noise[u], x_esti, P)
-        esti_save[u] = x_esti
+#     esti_save = torch.zeros(len_sample)
+#     for u in range(len_sample):
+#         if u == 0:
+#             x_esti, P = x_0, P_0
+#         else:
+#             x_esti, P = kalman_filter(ecg_noise[u], x_esti, P)
+#         esti_save[u] = x_esti
 
-    optimizer2.zero_grad()
-    y_pred2 = model2(ecg_noise)
-    loss2 = mse_loss(y_pred2, ecg_noise)
-    loss2.backward()
-    optimizer2.step()
-    print(loss2.item())
-    losses.append(loss2.item())
+#     optimizer2.zero_grad()
+#     y_pred2 = model2(ecg_noise)
+#     loss2 = mse_loss(y_pred2, ecg_noise)
+#     loss2.backward()
+#     optimizer2.step()
+#     print(loss2.item())
+#     losses.append(loss2.item())
 
-plt.plot(losses)
-plt.show()
+# plt.plot(losses)
+# plt.show()
 
-plt.plot(ecg_noise, 'r', alpha = 0.7)
-plt.plot(y_pred2.detach(), 'b', alpha = 0.3)
-plt.plot(y_pred.detach(), 'k')
-plt.show()
+# plt.plot(ecg_noise, 'r', alpha = 0.7)
+# plt.plot(y_pred2.detach(), 'b', alpha = 0.3)
+# plt.plot(y_pred.detach(), 'k')
+# plt.show()
